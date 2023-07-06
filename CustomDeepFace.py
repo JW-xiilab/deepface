@@ -15,6 +15,8 @@ from typing import Any, Dict, List
 
 import tensorflow as tf
 from tensorflow.keras.models import Model
+import tensorflow.keras.backend as K
+
 
 # package dependencies
 from deepface.basemodels import (
@@ -42,13 +44,9 @@ if tf_version == 2:
     tf.get_logger().setLevel(logging.ERROR)
 # -----------------------------------
 
-class DeepFace:
-    def __init__(
-        self,
-        actions: List[str],
-        detector_backend: str
 
-    )-> None:
+class DeepFace:
+    def __init__(self, actions: List[str], detector_backend: str):
         for action in actions:
             if action not in ("emotion", "age", "gender", "race"):
                 raise ValueError(
@@ -70,12 +68,9 @@ class DeepFace:
         if "race" in self.actions:
             self.models["race"] = self._build_model("Race")
 
-    def anlayze(self, 
-                img_path: str,
-                enforce_detection: bool = True,
-                align: bool = True,
-                silent: bool = True
-                ) -> List[Dict[str, Any]]:
+    def anlayze(
+        self, img_path: str, enforce_detection: bool = True, align: bool = True, silent: bool = True
+    ) -> List[Dict[str, Any]]:
         """
         This function analyzes facial attributes including age, gender, emotion and race.
         In the background, analysis function builds convolutional neural network models to
@@ -149,8 +144,7 @@ class DeepFace:
             if img_content.shape[0] > 0 and img_content.shape[1] > 0:
                 obj = {}
                 # facial attribute analysis
-                pbar = tqdm(range(0, len(self.actions)),
-                            desc="Finding actions", disable=silent)
+                pbar = tqdm(range(0, len(self.actions)), desc="Finding actions", disable=silent)
                 for index in pbar:
                     action = self.actions[index]
                     pbar.set_description(f"Action: {action}")
@@ -160,50 +154,45 @@ class DeepFace:
                         img_gray = np.expand_dims(img_gray, axis=0)
 
                         emotion_predictions = self.models["emotion"].predict(img_gray, verbose=0)[
-                            0, :]
+                            0, :
+                        ]
 
                         sum_of_predictions = emotion_predictions.sum()
 
                         obj["emotion"] = {}
 
                         for i, emotion_label in enumerate(Emotion.labels):
-                            emotion_prediction = 100 * \
-                                emotion_predictions[i] / sum_of_predictions
+                            emotion_prediction = 100 * emotion_predictions[i] / sum_of_predictions
                             obj["emotion"][emotion_label] = emotion_prediction
 
-                        obj["dominant_emotion"] = Emotion.labels[np.argmax(
-                            emotion_predictions)]
+                        obj["dominant_emotion"] = Emotion.labels[np.argmax(emotion_predictions)]
                     elif action == "age":
-                        age_predictions = self.models["age"].predict(
-                            img_content, verbose=0)[0, :]
+                        age_predictions = self.models["age"].predict(img_content, verbose=0)[0, :]
                         apparent_age = Age.findApparentAge(age_predictions)
                         # int cast is for exception - object of type 'float32' is not JSON serializable
                         obj["age"] = int(apparent_age)
 
                     elif action == "gender":
-                        gender_predictions = self.models["gender"].predict(
-                            img_content, verbose=0)[0, :]
+                        gender_predictions = self.models["gender"].predict(img_content, verbose=0)[
+                            0, :
+                        ]
                         obj["gender"] = {}
                         for i, gender_label in enumerate(Gender.labels):
                             gender_prediction = 100 * gender_predictions[i]
                             obj["gender"][gender_label] = gender_prediction
 
-                        obj["dominant_gender"] = Gender.labels[np.argmax(
-                            gender_predictions)]
+                        obj["dominant_gender"] = Gender.labels[np.argmax(gender_predictions)]
 
                     elif action == "race":
-                        race_predictions = self.models["race"].predict(
-                            img_content, verbose=0)[0, :]
+                        race_predictions = self.models["race"].predict(img_content, verbose=0)[0, :]
                         sum_of_predictions = race_predictions.sum()
 
                         obj["race"] = {}
                         for i, race_label in enumerate(Race.labels):
-                            race_prediction = 100 * \
-                                race_predictions[i] / sum_of_predictions
+                            race_prediction = 100 * race_predictions[i] / sum_of_predictions
                             obj["race"][race_label] = race_prediction
 
-                        obj["dominant_race"] = Race.labels[np.argmax(
-                            race_predictions)]
+                        obj["dominant_race"] = Race.labels[np.argmax(race_predictions)]
 
                     obj["region"] = img_region
 
@@ -211,8 +200,7 @@ class DeepFace:
 
         return resp_objects
 
-
-    def _build_model(self, model_name:str) -> Dict[str, Model]:
+    def _build_model(self, model_name: str) -> Dict[str, Model]:
         """
         This function builds a deepface model
         Parameters:
