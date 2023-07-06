@@ -1,17 +1,19 @@
-import os
-import base64
-from pathlib import Path
-from PIL import Image
+from deepface.detectors import FaceDetector
+from deprecated import deprecated
+import tensorflow as tf
+import cv2
+import numpy as np
 import requests
+from PIL import Image
+from pathlib import Path
+import base64
+import os
+import sys
+sys.path.append('/DATA_17/kjw/DeepFace')
 
 # 3rd party dependencies
-import numpy as np
-import cv2
-import tensorflow as tf
-from deprecated import deprecated
 
 # package dependencies
-from deepface.detectors import FaceDetector
 
 
 # --------------------------------------------------
@@ -156,7 +158,8 @@ def extract_faces(
         face_objs = [(img, img_region, 0)]
     else:
         face_detector = FaceDetector.build_model(detector_backend)
-        face_objs = FaceDetector.detect_faces(face_detector, detector_backend, img, align)
+        face_objs = FaceDetector.detect_faces(
+            face_detector, detector_backend, img, align)
 
     # in case of no face found
     if len(face_objs) == 0 and enforce_detection is True:

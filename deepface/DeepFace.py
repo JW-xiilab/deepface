@@ -191,15 +191,19 @@ def verify(
             img2_representation = img2_embedding_obj[0]["embedding"]
 
             if distance_metric == "cosine":
-                distance = dst.findCosineDistance(img1_representation, img2_representation)
+                distance = dst.findCosineDistance(
+                    img1_representation, img2_representation)
             elif distance_metric == "euclidean":
-                distance = dst.findEuclideanDistance(img1_representation, img2_representation)
+                distance = dst.findEuclideanDistance(
+                    img1_representation, img2_representation)
             elif distance_metric == "euclidean_l2":
                 distance = dst.findEuclideanDistance(
-                    dst.l2_normalize(img1_representation), dst.l2_normalize(img2_representation)
+                    dst.l2_normalize(img1_representation), dst.l2_normalize(
+                        img2_representation)
                 )
             else:
-                raise ValueError("Invalid distance_metric passed - ", distance_metric)
+                raise ValueError(
+                    "Invalid distance_metric passed - ", distance_metric)
 
             distances.append(distance)
             regions.append((img1_region, img2_region))
@@ -339,7 +343,8 @@ def analyze(
         if img_content.shape[0] > 0 and img_content.shape[1] > 0:
             obj = {}
             # facial attribute analysis
-            pbar = tqdm(range(0, len(actions)), desc="Finding actions", disable=silent)
+            pbar = tqdm(range(0, len(actions)),
+                        desc="Finding actions", disable=silent)
             for index in pbar:
                 action = actions[index]
                 pbar.set_description(f"Action: {action}")
@@ -349,43 +354,52 @@ def analyze(
                     img_gray = cv2.resize(img_gray, (48, 48))
                     img_gray = np.expand_dims(img_gray, axis=0)
 
-                    emotion_predictions = models["emotion"].predict(img_gray, verbose=0)[0, :]
+                    emotion_predictions = models["emotion"].predict(img_gray, verbose=0)[
+                        0, :]
 
                     sum_of_predictions = emotion_predictions.sum()
 
                     obj["emotion"] = {}
 
                     for i, emotion_label in enumerate(Emotion.labels):
-                        emotion_prediction = 100 * emotion_predictions[i] / sum_of_predictions
+                        emotion_prediction = 100 * \
+                            emotion_predictions[i] / sum_of_predictions
                         obj["emotion"][emotion_label] = emotion_prediction
 
-                    obj["dominant_emotion"] = Emotion.labels[np.argmax(emotion_predictions)]
+                    obj["dominant_emotion"] = Emotion.labels[np.argmax(
+                        emotion_predictions)]
 
                 elif action == "age":
-                    age_predictions = models["age"].predict(img_content, verbose=0)[0, :]
+                    age_predictions = models["age"].predict(
+                        img_content, verbose=0)[0, :]
                     apparent_age = Age.findApparentAge(age_predictions)
                     # int cast is for exception - object of type 'float32' is not JSON serializable
                     obj["age"] = int(apparent_age)
 
                 elif action == "gender":
-                    gender_predictions = models["gender"].predict(img_content, verbose=0)[0, :]
+                    gender_predictions = models["gender"].predict(
+                        img_content, verbose=0)[0, :]
                     obj["gender"] = {}
                     for i, gender_label in enumerate(Gender.labels):
                         gender_prediction = 100 * gender_predictions[i]
                         obj["gender"][gender_label] = gender_prediction
 
-                    obj["dominant_gender"] = Gender.labels[np.argmax(gender_predictions)]
+                    obj["dominant_gender"] = Gender.labels[np.argmax(
+                        gender_predictions)]
 
                 elif action == "race":
-                    race_predictions = models["race"].predict(img_content, verbose=0)[0, :]
+                    race_predictions = models["race"].predict(
+                        img_content, verbose=0)[0, :]
                     sum_of_predictions = race_predictions.sum()
 
                     obj["race"] = {}
                     for i, race_label in enumerate(Race.labels):
-                        race_prediction = 100 * race_predictions[i] / sum_of_predictions
+                        race_prediction = 100 * \
+                            race_predictions[i] / sum_of_predictions
                         obj["race"][race_label] = race_prediction
 
-                    obj["dominant_race"] = Race.labels[np.argmax(race_predictions)]
+                    obj["dominant_race"] = Race.labels[np.argmax(
+                        race_predictions)]
 
                 # -----------------------------
                 # mention facial areas
@@ -468,7 +482,8 @@ def find(
             representations = pickle.load(f)
 
         if not silent:
-            print("There are ", len(representations), " representations found in ", file_name)
+            print("There are ", len(representations),
+                  " representations found in ", file_name)
 
     else:  # create representation.pkl from scratch
         employees = []
@@ -543,7 +558,8 @@ def find(
 
     # ----------------------------
     # now, we got representations for facial database
-    df = pd.DataFrame(representations, columns=["identity", f"{model_name}_representation"])
+    df = pd.DataFrame(representations, columns=[
+                      "identity", f"{model_name}_representation"])
 
     # img path might have more than once face
     target_objs = functions.extract_faces(
@@ -580,16 +596,19 @@ def find(
             source_representation = instance[f"{model_name}_representation"]
 
             if distance_metric == "cosine":
-                distance = dst.findCosineDistance(source_representation, target_representation)
+                distance = dst.findCosineDistance(
+                    source_representation, target_representation)
             elif distance_metric == "euclidean":
-                distance = dst.findEuclideanDistance(source_representation, target_representation)
+                distance = dst.findEuclideanDistance(
+                    source_representation, target_representation)
             elif distance_metric == "euclidean_l2":
                 distance = dst.findEuclideanDistance(
                     dst.l2_normalize(source_representation),
                     dst.l2_normalize(target_representation),
                 )
             else:
-                raise ValueError(f"invalid distance metric passes - {distance_metric}")
+                raise ValueError(
+                    f"invalid distance metric passes - {distance_metric}")
 
             distances.append(distance)
 
@@ -674,15 +693,16 @@ def represent(
         elif type(img_path).__module__ == np.__name__:
             img = img_path.copy()
         else:
-            raise ValueError(f"unexpected type for img_path - {type(img_path)}")
+            raise ValueError(
+                f"unexpected type for img_path - {type(img_path)}")
         # --------------------------------
-        if len(img.shape) == 4:
+        if len(img.shape) == 4:  # type: ignore
             img = img[0]  # e.g. (1, 224, 224, 3) to (224, 224, 3)
-        if len(img.shape) == 3:
+        if len(img.shape) == 3:  # type: ignore
             img = cv2.resize(img, target_size)
             img = np.expand_dims(img, axis=0)
         # --------------------------------
-        img_region = [0, 0, img.shape[1], img.shape[0]]
+        img_region = [0, 0, img.shape[1], img.shape[0]]  # type: ignore
         img_objs = [(img, img_region, 0)]
     # ---------------------------------
 
@@ -742,7 +762,8 @@ def stream(
 
     if time_threshold < 1:
         raise ValueError(
-            "time_threshold must be greater than the value 1 but you passed " + str(time_threshold)
+            "time_threshold must be greater than the value 1 but you passed " +
+            str(time_threshold)
         )
 
     if frame_threshold < 1:
