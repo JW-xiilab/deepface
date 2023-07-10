@@ -13,3 +13,5 @@
 Dockerfile
 *.log
 *.pkl
+/tmp_pkl
+/false_pred
